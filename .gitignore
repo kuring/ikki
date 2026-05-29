@@ -1,11 +1,17 @@
+# 本地开发环境
 .venv/
 .idea/
+.codex/
+.DS_Store
+
+# Python 缓存和测试产物
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+
+# 构建和安装产物
 build/
 dist/
 *.egg-info/
-.DS_Store

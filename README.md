@@ -8,7 +8,7 @@ Ikki 是一个面向学习的 Coding Agent 项目。
 
 阶段：`v0.0-bootstrap`
 
-这一阶段先完成项目脚手架：
+这一阶段先完成项目底座：
 
 - 在 `src/ikki` 下建立 Python 包结构。
 - 增加命令行入口：`ikki`。
@@ -17,6 +17,8 @@ Ikki 是一个面向学习的 Coding Agent 项目。
 - 增加基础日志初始化。
 - 增加占位模型客户端。
 - 增加最小测试和里程碑记录。
+
+阶段 0 的完整目标已经扩展为：CLI、可扩展配置、多模型调用、日志和测试底座；模型层需要同时兼容 OpenAI-compatible 接口和 Anthropic API。详细范围见 [docs/roadmap.md](docs/roadmap.md) 和 [docs/stages/stage-0-bootstrap.md](docs/stages/stage-0-bootstrap.md)。
 
 ## 开发约束
 
@@ -66,10 +68,17 @@ Ikki 已接收任务：hello
 PYTHONPATH=src python3 -m unittest discover -s tests
 ```
 
-## 路线图
+## 项目文档
 
-- `v0.0-bootstrap`：项目脚手架。
+- [项目路线](docs/roadmap.md)
+- [阶段 0：项目底座](docs/stages/stage-0-bootstrap.md)
+- [里程碑](docs/milestones.md)
+
+通用 Agent 概念笔记保留在 `/Users/kuring/my_git/ai-notebook`，本仓库只维护和 `ikki` 代码强绑定的项目文档。
+
+## 路线图摘要
+
+- `v0.0-bootstrap`：项目底座。
 - `v0.1-chat-loop`：最小对话 Agent。
 - `v0.2-tools`：最小工具调用。
 - `v0.3-repo-context`：代码仓库搜索和文件读取。
-
