@@ -13,10 +13,10 @@ Ikki 是一个面向学习的 Coding Agent 项目。
 - 在 `src/ikki` 下建立 Python 包结构。
 - 增加命令行入口：`ikki`。
 - 增加最小 `Agent` 类。
-- 从环境变量读取配置。
+- 支持 `~/.ikki/config.yaml` 配置文件、环境变量和命令行覆盖。
 - 增加基础日志初始化。
-- 增加占位模型客户端。
-- 增加最小测试和里程碑记录。
+- 增加统一模型接口和 `echo`、OpenAI-compatible、Anthropic 三类模型后端。
+- 增加 CLI、配置和模型测试。
 
 阶段 0 的完整目标已经扩展为：CLI、可扩展配置、多模型调用、日志和测试底座；模型层需要同时兼容 OpenAI-compatible 接口和 Anthropic API。详细范围见 [docs/roadmap.md](docs/roadmap.md) 和 [docs/stages/stage-0-bootstrap.md](docs/stages/stage-0-bootstrap.md)。
 
@@ -58,7 +58,67 @@ ikki "hello"
 Ikki 已接收任务：hello
 ```
 
-这一阶段还不会调用真实模型。`model.py` 只是一个占位层，用来给后续真实模型调用留出清晰位置。
+默认情况下，Ikki 使用内置 `local_test` echo 模型，不需要网络和 API Key。也可以显式选择：
+
+```bash
+ikki --model local_test "hello"
+```
+
+## 配置模型
+
+Ikki 的默认工作目录是 `~/.ikki/`，默认配置文件是 `~/.ikki/config.yaml`。复制示例配置：
+
+```bash
+mkdir -p ~/.ikki
+cp ikki.example.yaml ~/.ikki/config.yaml
+```
+
+模型选择优先级固定为：
+
+```text
+--model > IKKI_MODEL > ~/.ikki/config.yaml 中的 app.default_model > 内置默认值
+```
+
+常用参数：
+
+```bash
+ikki --config ~/.ikki/config.yaml --model local_test --log-level DEBUG "hello"
+```
+
+配置路径可以通过 `--config` 临时指定，也可以通过 `IKKI_CONFIG` 设置本机默认配置文件。工作目录可以通过 `IKKI_HOME` 覆盖；未设置时使用 `~/.ikki/`，配置文件默认位于该目录下的 `config.yaml`。
+
+如果不想每次都写 `--model claude_default`，把 `~/.ikki/config.yaml` 中的默认模型改成：
+
+```yaml
+app:
+  default_model: claude_default
+```
+
+`models` 是以 profile 名称为 key 的映射，`app.default_model`、`IKKI_MODEL` 和 `--model` 都引用这个名称。示例配置默认保留 `local_test`，这样复制后不配置 API Key 也能先跑通。
+
+`ikki.example.yaml` 包含三个 profile 示例：
+
+- `local_test`：本地 echo 模型，用于离线开发和测试。
+- `openai_default`：OpenAI-compatible Chat Completions 接口。
+- `claude_default`：Anthropic Messages API 接口。
+
+真实模型的 API Key 只通过环境变量读取，不要写入 `config.yaml`：
+
+```bash
+export OPENAI_API_KEY="..."
+ikki --model openai_default "解释这段代码"
+
+export ANTHROPIC_API_KEY="..."
+ikki --model claude_default "解释这段代码"
+```
+
+OpenAI-compatible profile 使用 `base_url` 拼接 `/chat/completions`；Anthropic profile 使用 `base_url` 拼接 `/v1/messages`，并默认发送 `anthropic-version: 2023-06-01`。
+
+## 安全注意事项
+
+- 不要把真实 API Key 写入仓库、示例配置或测试 fixture。
+- `config.yaml` 应作为本机私有配置管理，公开文档只保留环境变量名。
+- 当前阶段只做非流式单次模型调用，不包含工具调用、文件编辑或 shell 执行能力。
 
 ## 开发
 

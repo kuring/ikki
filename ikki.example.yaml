@@ -1,0 +1,25 @@
+app:
+  log_level: INFO
+  # 默认保留 local_test，保证复制配置后无 API Key 也能运行。
+  # 想默认使用 Claude 时改为 claude_default，并设置 ANTHROPIC_API_KEY。
+  default_model: local_test
+
+models:
+  local_test:
+    provider: echo
+
+  openai_default:
+    provider: openai-compatible
+    model: gpt-4.1-mini
+    base_url: https://api.openai.com/v1
+    api_key_env: OPENAI_API_KEY
+    temperature: 0.2
+    timeout_seconds: 60
+
+  claude_default:
+    provider: anthropic
+    model: claude-sonnet-4-5
+    base_url: https://api.anthropic.com
+    api_key_env: ANTHROPIC_API_KEY
+    temperature: 0.2
+    timeout_seconds: 60

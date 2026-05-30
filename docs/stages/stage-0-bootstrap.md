@@ -27,8 +27,8 @@
 
 - Python 包结构和 CLI 入口。
 - 中文注释、中文 README、中文 CLI 帮助信息。
-- 可扩展配置文件，例如 `ikki.yaml`。
-- 配置优先级：命令行参数 > 环境变量 > 配置文件 > 默认值。
+- 可扩展配置文件，例如 `~/.ikki/config.yaml`。
+- 模型选择优先级：`--model` > `IKKI_MODEL` > 配置文件中的 `app.default_model` > 内置默认值。
 - 模型调用抽象，例如 `ModelClient` 或 `ModelProvider`。
 - 至少三类模型后端：
   - `echo`：本地回显模型，用于无网络、无 API Key 的测试。
@@ -57,6 +57,8 @@
 ### 配置文件采用 YAML
 
 Ikki 的配置文件采用 YAML 作为主格式。这个选择不是为了最小依赖，而是为了从一开始面向复杂 Agent 系统设计：后续的模型 profile、工具权限、安全策略、工作区规则、记忆策略和评测任务都会进入配置系统，YAML 在表达嵌套结构、列表和策略型配置时更自然。
+
+Ikki 默认使用 `~/.ikki/` 作为 Agent 工作目录，默认配置文件位于 `~/.ikki/config.yaml`。这个路径形态参考了 Claude Code 的用户级 `~/.claude/settings.json` 和 OpenCode 的全局配置目录设计：用户级配置先放在 Agent 自己的目录下，后续再扩展项目级、团队级或受管配置时，不需要推翻现有路径。
 
 示例：
 
@@ -98,11 +100,14 @@ models:
 
 - YAML 只是外部文件格式，内部要先定义稳定的配置 schema，再把 YAML 解析结果转换成内部配置对象，避免后续业务逻辑直接依赖 YAML 结构细节。
 - API Key 不直接写进配置文件，只写环境变量名，例如 `api_key_env = "OPENAI_API_KEY"`。
+- 默认工作目录是 `~/.ikki/`，可用 `IKKI_HOME` 覆盖；默认配置文件是工作目录下的 `config.yaml`。
+- 配置文件路径可用 `--config` 临时指定，也可用 `IKKI_CONFIG` 设置本机默认路径；显式路径不存在时应报告清晰错误。
 - `provider` 决定使用哪种模型后端。
 - `model` 是供应商侧的模型名。
 - `base_url` 允许切换到其他 OpenAI-compatible 服务。
 - Anthropic 后端默认使用 Anthropic Messages API，`base_url` 用于切换官方或兼容服务地址。
 - `default_model` 决定默认 profile。
+- 如果想默认使用 Claude，把 `app.default_model` 改为 `claude_default`，并设置 `ANTHROPIC_API_KEY`。
 - CLI 可以用 `--model fast` 临时切换 profile。
 - YAML 解析使用安全加载模式，不执行任意对象构造；布尔值、数字和字符串要经过 schema 校验后再进入运行时。
 
@@ -145,7 +150,7 @@ ikki/
 
 - `cli.py`：命令行入口，负责解析任务、配置路径、模型 profile 和日志级别。
 - `agent.py`：最小 Agent 主流程，先只负责接收任务并调用模型。
-- `config.py`：读取 YAML 配置、环境变量和 CLI 覆盖项，并转换成内部配置对象。
+- `config.py`：解析 Ikki 工作目录、读取 YAML 配置、环境变量和 CLI 覆盖项，并转换成内部配置对象。
 - `models/base.py`：定义统一模型接口。
 - `models/echo.py`：本地测试模型。
 - `models/openai_compatible.py`：真实大模型调用实现。
@@ -155,31 +160,34 @@ ikki/
 
 ## 实现任务
 
-- [ ] 增加或调整 CLI 参数：`--config`、`--model`、`--log-level`。
-- [ ] 增加 `ikki.example.yaml` 示例配置。
-- [ ] 引入 YAML 解析依赖，并使用安全加载模式读取配置文件。
-- [ ] 实现配置加载和优先级覆盖。
-- [ ] 定义内部配置 schema，对模型 profile、数值范围和必填字段做校验。
-- [ ] 拆分 `models/` 模块。
-- [ ] 实现 `echo` 模型。
-- [ ] 实现 OpenAI-compatible 模型调用。
-- [ ] 实现 Anthropic API 模型调用。
-- [ ] 在 Agent 主流程中通过配置选择模型。
-- [ ] 补充中文 README 和里程碑。
-- [ ] 补充 CLI、配置、模型相关测试。
+- [x] 增加或调整 CLI 参数：`--config`、`--model`、`--log-level`。
+- [x] 增加 `ikki.example.yaml` 示例配置。
+- [x] 引入 YAML 解析依赖，并使用安全加载模式读取配置文件。
+- [x] 默认从 `~/.ikki/config.yaml` 读取配置，并支持 `IKKI_HOME`、`IKKI_CONFIG` 和 `--config` 覆盖。
+- [x] 实现配置加载和优先级覆盖。
+- [x] 支持通过 `app.default_model` 指定默认模型 profile，避免每次传 `--model`。
+- [x] 定义内部配置 schema，对模型 profile、数值范围和必填字段做校验。
+- [x] 拆分 `models/` 模块。
+- [x] 实现 `echo` 模型。
+- [x] 实现 OpenAI-compatible 模型调用。
+- [x] 实现 Anthropic API 模型调用。
+- [x] 在 Agent 主流程中通过配置选择模型。
+- [x] 补充中文 README 和里程碑。
+- [x] 补充 CLI、配置、模型相关测试。
 
 ## 完成标准
 
-- [ ] `ikki --help` 可以正常显示中文帮助信息。
-- [ ] `ikki --model local_test "hello"` 可以在无 API Key 的情况下运行。
-- [ ] `ikki --config ikki.yaml --model default "hello"` 可以调用真实大模型。
-- [ ] 支持至少一个 OpenAI-compatible 后端。
-- [ ] 支持至少一个 Anthropic API 后端。
-- [ ] 配置文件支持多个模型 profile。
-- [ ] API Key 只从环境变量读取，不写进仓库。
-- [ ] 模型调用失败时有清晰错误提示。
-- [ ] README 写清楚安装、配置、运行和安全注意事项。
-- [ ] 测试覆盖 CLI、配置加载、模型选择和 echo 模型。
+- [x] `ikki --help` 可以正常显示中文帮助信息。
+- [x] `ikki --model local_test "hello"` 可以在无 API Key 的情况下运行。
+- [x] `app.default_model` 可以指定默认模型 profile，`--model` 可以临时覆盖。
+- [x] `ikki --config ~/.ikki/config.yaml --model default "hello"` 可以按配置选择真实大模型 profile。
+- [x] 支持至少一个 OpenAI-compatible 后端。
+- [x] 支持至少一个 Anthropic API 后端。
+- [x] 配置文件支持多个模型 profile。
+- [x] API Key 只从环境变量读取，不写进仓库。
+- [x] 模型调用失败时有清晰错误提示。
+- [x] README 写清楚安装、配置、运行和安全注意事项。
+- [x] 测试覆盖 CLI、配置加载、模型选择和 echo 模型。
 - [ ] 提交代码并打 tag：`v0.0-bootstrap`。
 
 ## 复盘问题
